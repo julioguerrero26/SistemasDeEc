@@ -26,7 +26,6 @@ public class Main {
             String[] partes = strEc.split("=");
             if (partes.length != 2) return ec;
 
-            // Limpiamos espacios en blanco
             String izq = partes[0].replaceAll("\\s+", "");
             String der = partes[1].replaceAll("\\s+", "");
 

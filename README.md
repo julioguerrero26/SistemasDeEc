@@ -7,8 +7,9 @@ Un programa interactivo en consola desarrollado en **Java** para resolver sistem
 * **Interfaz en consola a color:** Utiliza códigos de escape ANSI para una experiencia de usuario más amigable y visual.
 * **Análisis de ecuaciones mediante Regex:** Capacidad para interpretar ecuaciones introducidas como texto libre (ej. `2x^2 + 3y = 5`).
 * **Validación de consistencia:** Verifica que las variables y potencias coincidan en ambas ecuaciones antes de procesarlas.
-* **Múltiples métodos de resolución:** * Sustitución
-    * Igualación
+* **Múltiples métodos de resolución:** 
+  * Sustitución
+  * Igualación
 * **Flujo interactivo:** Permite al usuario confirmar si el sistema fue interpretado correctamente antes de proceder a calcular la solución.
 
 ## 🛠️ Tecnologías utilizadas

@@ -25,4 +25,4 @@ Para compilar y ejecutar este proyecto, necesitas tener instalado:
 
 1. **Clona este repositorio** o descarga el archivo `Main.java`.
    ```bash
-   git clone [https://github.com/tu-usuario/tu-repositorio.git](https://github.com/tu-usuario/tu-repositorio.git)
+   git clone https://github.com/julioguerrero26/SistemasDeEc.git

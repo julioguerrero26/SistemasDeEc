@@ -201,9 +201,8 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
-        sistemaDeEcuacion();
-    }
+    public static void main(String[] args) {sistemaDeEcuacion();}
+
 }
 
 class IO {

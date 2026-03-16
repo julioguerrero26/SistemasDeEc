@@ -24,55 +24,81 @@ public class Main {
         ec.valida = false;
         try {
             String[] partes = strEc.split("=");
-            if (partes.length != 2)
-                return ec;
+            if (partes.length != 2) return ec;
 
+            // Limpiamos espacios en blanco
             String izq = partes[0].replaceAll("\\s+", "");
             String der = partes[1].replaceAll("\\s+", "");
 
-            ec.c = Integer.parseInt(der);
+            int c_total = Integer.parseInt(der);
 
-            Pattern p = Pattern.compile("([+-]?\\d*)([a-zA-Z])(?:\\^(\\d+))?");
-            Matcher m = p.matcher(izq);
+            Pattern pBinomio = Pattern.compile("([+-]?\\d*)\\(([a-zA-Z])([+-]\\d+)\\)");
+            Matcher mBinomio = pBinomio.matcher(izq);
+            StringBuffer sb = new StringBuffer();
 
+            while (mBinomio.find()) {
+                String strCoefExt = mBinomio.group(1);
+                String var = mBinomio.group(2);
+                String strConstInt = mBinomio.group(3);
+
+                int coefExt = 1;
+                if (strCoefExt.equals("-")) coefExt = -1;
+                else if (strCoefExt.equals("+") || strCoefExt.isEmpty()) coefExt = 1;
+                else coefExt = Integer.parseInt(strCoefExt.replace("+", ""));
+
+                int constInt = Integer.parseInt(strConstInt.replace("+", ""));
+
+                int nuevoCoefVar = coefExt;
+                int nuevaConstante = coefExt * constInt;
+
+                String reemplazo = (nuevoCoefVar >= 0 ? "+" : "") + nuevoCoefVar + var +
+                        (nuevaConstante >= 0 ? "+" : "") + nuevaConstante;
+                mBinomio.appendReplacement(sb, reemplazo);
+            }
+            mBinomio.appendTail(sb);
+            izq = sb.toString();
+
+            Pattern pTermino = Pattern.compile("([+-]?\\d*)([a-zA-Z])(?:\\^(\\d+))?");
+            Matcher mRemocion = pTermino.matcher(izq);
+            String soloConstantes = mRemocion.replaceAll("");
+
+            int constantesIzquierda = 0;
+            Pattern pConst = Pattern.compile("[+-]?\\d+");
+            Matcher mConst = pConst.matcher(soloConstantes);
+            while (mConst.find()) {
+                constantesIzquierda += Integer.parseInt(mConst.group().replace("+", ""));
+            }
+
+            ec.c = c_total - constantesIzquierda;
+
+            Matcher mTermino = pTermino.matcher(izq);
             int contador = 0;
-            int ultimoFin = 0;
-            while (m.find()) {
-                if (m.start() != ultimoFin)
-                    return ec;
-                ultimoFin = m.end();
-                String strCoef = m.group(1);
-                char var = m.group(2).charAt(0);
-                String strPot = m.group(3);
+
+            while (mTermino.find()) {
+                String strCoef = mTermino.group(1);
+                char var = mTermino.group(2).charAt(0);
+                String strPot = mTermino.group(3);
 
                 int coef = 1;
-                if (strCoef.equals("-"))
-                    coef = -1;
+                if (strCoef.equals("-")) coef = -1;
                 else if (!strCoef.isEmpty() && !strCoef.equals("+")) {
                     coef = Integer.parseInt(strCoef.replace("+", ""));
                 }
 
                 int pot = 1;
-                if (strPot != null && !strPot.isEmpty()) {
-                    pot = Integer.parseInt(strPot);
-                }
+                if (strPot != null && !strPot.isEmpty()) pot = Integer.parseInt(strPot);
 
                 if (contador == 0) {
-                    ec.a = coef;
-                    ec.v1 = var;
-                    ec.p1 = pot;
+                    ec.a = coef; ec.v1 = var; ec.p1 = pot;
                 } else if (contador == 1) {
-                    ec.b = coef;
-                    ec.v2 = var;
-                    ec.p2 = pot;
+                    ec.b = coef; ec.v2 = var; ec.p2 = pot;
                 }
                 contador++;
             }
-            if (ultimoFin != izq.length() || contador != 2)
-                return ec;
 
-            ec.valida = true;
-        } catch (Exception e) {
+            if (contador == 2) ec.valida = true;
+
+        } catch (Exception ignore) {
         }
         return ec;
     }
@@ -90,40 +116,30 @@ public class Main {
             Ecuacion ec2 = null;
 
             while (true) {
-                String str1 = IO.leerLinea(YELLOW + "Ingresa la primera ecuación (ej. 2x^2 + 3y = 5): " + RESET);
+                String str1 = IO.leerLinea(YELLOW + "Ingresa la primera ecuación (ej. 2(x+3) - 3y = 15): " + RESET);
                 ec1 = analizarEcuacion(str1);
-                if (ec1.valida)
-                    break;
-                System.out.println(RED + "¡Error! Ingresa una ecuación válida en el formato ax^n + by^m = c." + RESET);
+                if (ec1.valida) break;
+                System.out.println(RED + "¡Error! Ingresa una ecuación válida." + RESET);
             }
 
             while (true) {
-                String str2 = IO.leerLinea(YELLOW + "Ingresa la segunda ecuación (ej. 4x^2 - y = 10): " + RESET);
+                String str2 = IO.leerLinea(YELLOW + "Ingresa la segunda ecuación (ej. 3(x-2) + 2(y+4) = 16): " + RESET);
                 ec2 = analizarEcuacion(str2);
                 if (ec2.valida) {
                     if ((ec1.v1 == ec2.v1 && ec1.p1 == ec2.p1 && ec1.v2 == ec2.v2 && ec1.p2 == ec2.p2) ||
                             (ec1.v1 == ec2.v2 && ec1.p1 == ec2.p2 && ec1.v2 == ec2.v1 && ec1.p2 == ec2.p1)) {
 
                         if (ec1.v1 != ec2.v1 || ec1.p1 != ec2.p1) {
-                            int tempA = ec2.a;
-                            ec2.a = ec2.b;
-                            ec2.b = tempA;
-                            char tempV = ec2.v1;
-                            ec2.v1 = ec2.v2;
-                            ec2.v2 = tempV;
-                            int tempP = ec2.p1;
-                            ec2.p1 = ec2.p2;
-                            ec2.p2 = tempP;
+                            int tempA = ec2.a; ec2.a = ec2.b; ec2.b = tempA;
+                            char tempV = ec2.v1; ec2.v1 = ec2.v2; ec2.v2 = tempV;
+                            int tempP = ec2.p1; ec2.p1 = ec2.p2; ec2.p2 = tempP;
                         }
                         break;
                     } else {
-                        System.out.println(RED + "¡Error! Las variables y potencias deben ser consistentes (" + ec1.v1
-                                + (ec1.p1 > 1 ? "^" + ec1.p1 : "") + " y " + ec1.v2 + (ec1.p2 > 1 ? "^" + ec1.p2 : "")
-                                + ")." + RESET);
+                        System.out.println(RED + "¡Error! Las variables y potencias deben ser consistentes." + RESET);
                     }
                 } else {
-                    System.out.println(
-                            RED + "¡Error! Ingresa una ecuación válida en el formato ax^n + by^m = c." + RESET);
+                    System.out.println(RED + "¡Error! Ingresa una ecuación válida." + RESET);
                 }
             }
 
@@ -138,7 +154,7 @@ public class Main {
 
             System.out.printf("""
 
-                    %s%sTu sistema de ecuaciones es:%s
+                    %s%sTu sistema de ecuaciones (simplificado) es:%s
                     (1) %d%c%s %s %d%c%s = %d
                     (2) %d%c%s %s %d%c%s = %d
                     """,
@@ -146,7 +162,7 @@ public class Main {
                     a1, v1, p1Str, signoB1, Math.abs(b1), v2, p2Str, c1,
                     a2, v1, p1Str, signoB2, Math.abs(b2), v2, p2Str, c2);
 
-            String confirmacion = IO.leerLinea("\n" + YELLOW + "¿Está bien escrito? (s/n): " + RESET);
+            String confirmacion = IO.leerLinea("\n" + YELLOW + "¿Está correcto? (s/n): " + RESET);
             boolean respuesta = confirmacion.equalsIgnoreCase("s");
 
             if (respuesta) {
@@ -163,54 +179,40 @@ public class Main {
                 }
             } else {
                 System.out.println("\n" + RED + "Reintentando datos de entrada..." + RESET);
-                try {
-                    Thread.sleep(1500);
-                } catch (InterruptedException ignore) {
-                }
+                try { Thread.sleep(1500); } catch (InterruptedException ignore) {}
             }
         }
     }
 
-    static void resolverPorSustitucion(int a1, int b1, int c1, int a2, int b2, int c2, char v1, String p1Str, char v2,
-            String p2Str) {
+    static void resolverPorSustitucion(int a1, int b1, int c1, int a2, int b2, int c2, char v1, String p1Str, char v2, String p2Str) {
         double determinanteDet = a1 * b2 - a2 * b1;
-
         if (determinanteDet != 0) {
             double x = (double) (c1 * b2 - c2 * b1) / determinanteDet;
             double y = (double) (a1 * c2 - a2 * c1) / determinanteDet;
-
-            System.out.printf("\n%s[Sustitución] Solución encontrada:%s\n %c%s = %.3f\n %c%s = %.3f\n", GREEN, RESET,
-                    v1, p1Str, x, v2, p2Str, y);
+            System.out.printf("\n%s[Sustitución] Solución encontrada:%s\n %c%s = %.3f\n %c%s = %.3f\n", GREEN, RESET, v1, p1Str, x, v2, p2Str, y);
         } else {
             System.out.println("\n" + RED + "El sistema no tiene solución única (Determinante = 0)." + RESET);
         }
     }
 
-    static void resolverPorIgualacion(int a1, int b1, int c1, int a2, int b2, int c2, char v1, String p1Str, char v2,
-            String p2Str) {
+    static void resolverPorIgualacion(int a1, int b1, int c1, int a2, int b2, int c2, char v1, String p1Str, char v2, String p2Str) {
         double det = (a1 * b2) - (a2 * b1);
-
         if (det != 0) {
             double y = (double) (a1 * c2 - a2 * c1) / det;
             double x = (a1 != 0) ? (c1 - b1 * y) / a1 : (c2 - b2 * y) / a2;
-
-            System.out.printf("\n%s[Igualación] Solución encontrada:%s\n %c%s = %.3f\n %c%s = %.3f\n", GREEN, RESET, v1,
-                    p1Str, x, v2, p2Str, y);
+            System.out.printf("\n%s[Igualación] Solución encontrada:%s\n %c%s = %.3f\n %c%s = %.3f\n", GREEN, RESET, v1, p1Str, x, v2, p2Str, y);
         } else {
             System.out.println("\n" + RED + "El sistema es inconsistente o dependiente." + RESET);
         }
     }
 
-    public static void main(String[] args) {sistemaDeEcuacion();}
-
+    public static void main(String[] args) { sistemaDeEcuacion(); }
 }
 
 class IO {
     private static final Scanner scanner = new Scanner(System.in);
-
     static String leerLinea(String prompt) {
         System.out.print(prompt);
         return scanner.nextLine();
     }
 }
-
